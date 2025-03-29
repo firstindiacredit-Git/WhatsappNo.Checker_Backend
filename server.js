@@ -38,3 +38,4 @@ app.listen(PORT, () => {
             console.log('Server will continue running without WhatsApp. Please restart to try again.');
         });
 });
+
