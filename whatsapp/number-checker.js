@@ -118,8 +118,8 @@ const checkNumbers = async (numbers) => {
             const result = await checkNumber(number);
             results.push(result);
             
-            // थोड़ा इंतजार करें ताकि WhatsApp API ब्लॉक न करे
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // थोड़ा कम इंतजार करें क्योंकि अब ज्यादा नंबर हैं
+            await new Promise(resolve => setTimeout(resolve, 500)); // 1000 से 500ms में कम किया
         } catch (error) {
             console.error(`Error checking number ${number}:`, error);
             results.push({

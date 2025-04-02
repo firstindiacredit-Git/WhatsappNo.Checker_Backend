@@ -34,10 +34,10 @@ router.post('/check', async (req, res) => {
             });
         }
         
-        if (numbers.length > 10) {
+        if (numbers.length > 100) {
             return res.status(400).json({
                 success: false,
-                error: 'Maximum 10 numbers can be checked at once'
+                error: 'Maximum 100 numbers can be checked at once'
             });
         }
         
