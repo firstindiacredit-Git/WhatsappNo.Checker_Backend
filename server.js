@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { getWhatsAppClient } = require('./whatsapp/whatsapp-client');
 const apiRoutes = require('./routes/api');
+const path = require('path');
 
 // एक्सप्रेस एप्लिकेशन
 const app = express();
@@ -22,6 +23,12 @@ app.get('/check', (req, res) => {
 
 // API रूट्स
 app.use('/api/whatsapp', apiRoutes);
+
+app.use(express.static(path.join(__dirname, 'dist')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 
 // सर्वर शुरू करें
 app.listen(PORT, () => {
