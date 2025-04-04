@@ -9,7 +9,12 @@ const app = express();
 const PORT = 4000;
 
 // मिडलवेयर
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:5173', 'https://whatsapp.pizeonfly.com'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
 app.use(express.json());
 
 // हेल्थ चेक रूट
