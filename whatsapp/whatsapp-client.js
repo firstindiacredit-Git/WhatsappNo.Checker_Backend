@@ -119,21 +119,20 @@ const initWhatsApp = async () => {
         // नया सॉकेट क्लाइंट बनाएं
         const sock = makeWASocket({
             auth: state,
-            printQRInTerminal: false, // हम खुद हैंडल करेंगे
+            printQRInTerminal: false,
             browser: Browsers.macOS('Chrome'),
             logger,
             markOnlineOnConnect: false,
-            connectTimeoutMs: 60000,
-            defaultQueryTimeoutMs: 30000,
+            connectTimeoutMs: 3600000,  // 1 घंटा
+            defaultQueryTimeoutMs: 3600000,  // 1 घंटा
             syncFullHistory: false
         });
         
         // प्रॉमिस प्रदान करें जो सफल कनेक्शन पर रिज़ॉल्व होगा
         return new Promise((resolve, reject) => {
-            // 2 मिनट टाइमआउट सेट करें
             const timeoutId = setTimeout(() => {
-                reject(new Error('WhatsApp connection timeout after 2 minutes'));
-            }, 120000);
+                reject(new Error('WhatsApp connection timeout after 1 hour'));
+            }, 3600000); // 1 घंटा
             
             // इवेंट लिसनर्स सेटअप करें
             setupSocketEvents(sock, (resolvedSock) => {

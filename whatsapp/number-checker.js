@@ -87,8 +87,8 @@ const checkNumber = async (number) => {
                 console.log(`Error checking format ${format}:`, err.message);
             }
             
-            // थोड़ा रुकें ताकि WhatsApp API ब्लॉक न करे
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // थोड़ा ज्यादा इंतरवल रखें ताकि रेट लिमिट से बचें
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
         
         // कोई भी फॉर्मेट मौजूद नहीं है
@@ -118,8 +118,8 @@ const checkNumbers = async (numbers) => {
             const result = await checkNumber(number);
             results.push(result);
             
-            // थोड़ा कम इंतजार करें क्योंकि अब ज्यादा नंबर हैं
-            await new Promise(resolve => setTimeout(resolve, 500)); // 1000 से 500ms में कम किया
+            // इंतरवल को बढ़ाएं
+            await new Promise(resolve => setTimeout(resolve, 1000)); // 1 सेकंड का इंतरवल
         } catch (error) {
             console.error(`Error checking number ${number}:`, error);
             results.push({
