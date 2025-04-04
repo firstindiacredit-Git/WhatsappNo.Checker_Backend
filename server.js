@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 // हेल्थ चेक रूट
-app.get('/', (req, res) => {
+app.get('/check', (req, res) => {
     res.json({
         status: 'ok',
         message: 'WhatsApp Number Checker API',
