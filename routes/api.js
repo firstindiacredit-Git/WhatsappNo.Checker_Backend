@@ -41,7 +41,7 @@ router.post('/check', async (req, res) => {
             });
         }
         
-        console.log('Received request to check numbers:', numbers);
+        // console.log('Received request to check numbers:', numbers);
         
         const status = getConnectionStatus();
         if (!status.connected) {
