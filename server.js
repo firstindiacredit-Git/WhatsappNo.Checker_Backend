@@ -5,7 +5,7 @@ const apiRoutes = require('./routes/api');
 
 // एक्सप्रेस एप्लिकेशन
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = 4000;
 
 // मिडलवेयर
 app.use(cors());
