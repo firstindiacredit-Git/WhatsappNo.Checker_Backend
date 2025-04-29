@@ -10,17 +10,32 @@ const formatNumber = (number) => {
         return cleaned;
     }
     
-    // अगर नंबर 91 से शुरू होता है (भारतीय देश कोड)
-    if (cleaned.startsWith('91') && cleaned.length >= 12) {
-        return '+' + cleaned;
+    // अगर नंबर देश कोड से शुरू होता है (जैसे 91, 1, 44, आदि)
+    const countryCodePatterns = {
+        '91': 12, // India (91 + 10 digits)
+        '1': 11,  // USA/Canada (1 + 10 digits)
+        '44': 12, // UK (44 + 10 digits)
+        '86': 13, // China (86 + 11 digits)
+        '81': 12, // Japan (81 + 10 digits)
+        '49': 12, // Germany (49 + 10 digits)
+        '33': 11, // France (33 + 9 digits)
+        '61': 12, // Australia (61 + 10 digits)
+
+    };
+
+    // Check if number starts with any known country code
+    for (const [code, length] of Object.entries(countryCodePatterns)) {
+        if (cleaned.startsWith(code) && cleaned.length >= length) {
+            return '+' + cleaned;
+        }
     }
     
-    // अगर नंबर 10 अंकों का है (भारतीय नंबर)
+    // If no country code is detected and length is 10, assume it's Indian
     if (cleaned.length === 10) {
         return '+91' + cleaned;
     }
     
-    // डिफ़ॉल्ट: जैसा है वैसा वापस करें
+    // If we can't determine the format, just add + prefix
     return '+' + cleaned;
 };
 
@@ -42,17 +57,33 @@ const generateNumberFormats = (number) => {
     // केवल अंक
     formats.add(digitsOnly);
     
-    // भारतीय नंबर के लिए प्रारूप (10 अंक)
-    if (digitsOnly.length === 10) {
-        formats.add(`+91${digitsOnly}`);
-        formats.add(`91${digitsOnly}`);
-    }
-    
-    // पहले से ही देश कोड के साथ (12 अंक)
-    else if (digitsOnly.length === 12 && digitsOnly.startsWith('91')) {
-        formats.add(`+${digitsOnly}`);
-        formats.add(digitsOnly);
-        formats.add(digitsOnly.substring(2));
+    // Check for various country formats
+    const countryFormats = {
+        // India
+        '91': [
+            { pattern: /^91\d{10}$/, format: num => `+${num}` },
+            { pattern: /^\d{10}$/, format: num => `+91${num}` }
+        ],
+        // USA/Canada
+        '1': [
+            { pattern: /^1\d{10}$/, format: num => `+${num}` },
+            { pattern: /^\d{10}$/, format: num => `+1${num}` }
+        ],
+        // UK
+        '44': [
+            { pattern: /^44\d{10}$/, format: num => `+${num}` },
+            { pattern: /^\d{10}$/, format: num => `+44${num}` }
+        ],
+        // Add more countries as needed
+    };
+
+    // Generate formats for each country pattern
+    for (const patterns of Object.values(countryFormats)) {
+        patterns.forEach(({ pattern, format }) => {
+            if (pattern.test(digitsOnly)) {
+                formats.add(format(digitsOnly));
+            }
+        });
     }
     
     return [...formats];
