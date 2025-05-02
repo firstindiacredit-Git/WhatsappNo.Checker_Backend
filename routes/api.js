@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { checkNumbers } = require('../whatsapp/number-checker');
-const { getConnectionStatus, clearSession } = require('../whatsapp/whatsapp-client');
+const { getConnectionStatus, clearSession, getQRCode } = require('../whatsapp/whatsapp-client');
 
 // स्टेटस चेक एंडपॉइंट
 router.get('/status', (req, res) => {
@@ -78,6 +78,25 @@ router.post('/clear-session', (req, res) => {
         res.json({
             success: true,
             message: 'Session cleared successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Add new QR code endpoint
+router.get('/qr', (req, res) => {
+    try {
+        const qrCode = getQRCode();
+        const status = getConnectionStatus();
+        
+        res.json({
+            success: true,
+            qrCode: qrCode,
+            isConnected: status.connected
         });
     } catch (error) {
         res.status(500).json({

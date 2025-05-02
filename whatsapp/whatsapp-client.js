@@ -13,6 +13,9 @@ let connectionAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_INTERVAL = 10000; // 10 सेकंड
 
+// Add this at the top with other variables
+let qrCode = null;
+
 // लॉगर को केवल गंभीर त्रुटियों के लिए कॉन्फिगर करें
 const logger = pino({ 
     level: 'error',
@@ -39,6 +42,12 @@ const setupSocketEvents = (sock, resolve, reject) => {
     // कनेक्शन अपडेट इवेंट
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
+
+        // Store QR code when received
+        if (qr) {
+            qrCode = qr;
+            console.log('New QR Code received');
+        }
 
         // कनेक्शन स्थिति अपडेट
         if (connection) {
@@ -184,8 +193,14 @@ const getConnectionStatus = () => {
     };
 };
 
+// Add this function to get QR code
+const getQRCode = () => {
+    return qrCode;
+};
+
 module.exports = {
     getWhatsAppClient,
     getConnectionStatus,
-    clearSession
+    clearSession,
+    getQRCode
 };
