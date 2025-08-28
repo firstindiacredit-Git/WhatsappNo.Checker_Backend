@@ -13,6 +13,10 @@ let connectionAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_INTERVAL = 10000; // 10 सेकंड
 
+// QR code storage
+let currentQRCode = null;
+let qrCodeTimestamp = null;
+
 // लॉगर को केवल गंभीर त्रुटियों के लिए कॉन्फिगर करें
 const logger = pino({ 
     level: 'error',
@@ -48,6 +52,8 @@ const setupSocketEvents = (sock, resolve, reject) => {
                 console.log('✅ Connected to WhatsApp!');
                 isConnected = true;
                 connectionAttempts = 0;
+                currentQRCode = null; // Clear QR code when connected
+                qrCodeTimestamp = null;
                 
                 if (!hasResolved) {
                     hasResolved = true;
@@ -64,6 +70,8 @@ const setupSocketEvents = (sock, resolve, reject) => {
                 if (statusCode === DisconnectReason.loggedOut || statusCode === 403) {
                     console.log('🔐 Session expired or logged out. Clearing session data.');
                     clearSession();
+                    currentQRCode = null;
+                    qrCodeTimestamp = null;
                     
                     if (!hasResolved) {
                         hasResolved = true;
@@ -95,11 +103,15 @@ const setupSocketEvents = (sock, resolve, reject) => {
             }
         }
 
-        // QR कोड प्रदर्शित करें
+        // QR कोड प्रदर्शित करें और store करें
         if (qr) {
             console.log('\n\n=== 📱 SCAN THIS QR CODE TO LOGIN ===\n');
             require('qrcode-terminal').generate(qr, { small: true });
             console.log('\n======================================\n');
+            
+            // Store QR code for frontend
+            currentQRCode = qr;
+            qrCodeTimestamp = new Date().toISOString();
         }
     });
 };
@@ -159,8 +171,52 @@ const clearSession = () => {
             fs.mkdirSync(SESSION_DIR, { recursive: true });
             console.log('🧹 Session data cleared successfully');
         }
+        currentQRCode = null;
+        qrCodeTimestamp = null;
     } catch (error) {
         console.error('❌ Error clearing session data:', error);
+    }
+};
+
+// WhatsApp से disconnect करें और नया QR code generate करें
+const disconnectWhatsApp = async () => {
+    try {
+        console.log('🔌 Disconnecting from WhatsApp...');
+        
+        // Close the current socket if it exists
+        if (waSocket) {
+            try {
+                await waSocket.logout();
+                console.log('✅ Successfully logged out from WhatsApp');
+            } catch (error) {
+                console.log('⚠️ Error during logout:', error.message);
+            }
+        }
+        
+        // Clear session data
+        clearSession();
+        
+        // Reset connection state
+        waSocket = null;
+        isConnected = false;
+        connectionAttempts = 0;
+        
+        // Initialize new WhatsApp client to get QR code
+        console.log('🔄 Initializing new WhatsApp client for QR code...');
+        waSocket = await initWhatsApp();
+        
+        return {
+            success: true,
+            message: 'Successfully disconnected and ready for new connection',
+            timestamp: new Date().toISOString()
+        };
+    } catch (error) {
+        console.error('❌ Error disconnecting WhatsApp:', error);
+        return {
+            success: false,
+            error: error.message,
+            timestamp: new Date().toISOString()
+        };
     }
 };
 
@@ -186,8 +242,26 @@ const getConnectionStatus = () => {
     };
 };
 
+// QR कोड प्राप्त करें
+const getQRCode = () => {
+    // Check if QR code is still valid (not older than 2 minutes)
+    if (currentQRCode && qrCodeTimestamp) {
+        const qrAge = Date.now() - new Date(qrCodeTimestamp).getTime();
+        if (qrAge < 120000) { // 2 minutes
+            return {
+                qr: currentQRCode,
+                timestamp: qrCodeTimestamp,
+                expiresIn: Math.max(0, 120000 - qrAge)
+            };
+        }
+    }
+    return null;
+};
+
 module.exports = {
     getWhatsAppClient,
     getConnectionStatus,
-    clearSession
+    clearSession,
+    getQRCode,
+    disconnectWhatsApp
 };

@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { checkNumbers } = require('../whatsapp/number-checker');
-const { getConnectionStatus, clearSession } = require('../whatsapp/whatsapp-client');
+const { getConnectionStatus, clearSession, getQRCode, disconnectWhatsApp } = require('../whatsapp/whatsapp-client');
+const QRCode = require('qrcode');
 
 // स्टेटस चेक एंडपॉइंट
 router.get('/status', (req, res) => {
@@ -98,6 +99,75 @@ router.post('/clear-session', (req, res) => {
         });
     } catch (error) {
         console.error('❌ Error clearing session:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// WhatsApp से disconnect करें और नया QR code generate करें
+router.post('/disconnect', async (req, res) => {
+    try {
+        console.log('🔌 Disconnect request received...');
+        const result = await disconnectWhatsApp();
+        
+        if (result.success) {
+            res.json({
+                success: true,
+                message: 'Successfully disconnected from WhatsApp. You can now scan a new QR code to connect with a different account.',
+                timestamp: new Date().toISOString()
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                error: result.error,
+                timestamp: new Date().toISOString()
+            });
+        }
+    } catch (error) {
+        console.error('❌ Error in disconnect endpoint:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// QR कोड एंडपॉइंट
+router.get('/qr', async (req, res) => {
+    try {
+        const qrData = getQRCode();
+        if (qrData && qrData.qr) {
+            // Generate QR code as SVG
+            const qrSvg = await QRCode.toString(qrData.qr, {
+                type: 'svg',
+                width: 256,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                }
+            });
+            
+            res.json({
+                success: true,
+                qr: qrSvg,
+                timestamp: qrData.timestamp,
+                expiresIn: qrData.expiresIn,
+                message: 'QR code available for scanning'
+            });
+        } else {
+            res.json({
+                success: false,
+                message: 'No QR code available. WhatsApp might already be connected or QR code expired.',
+                timestamp: new Date().toISOString()
+            });
+        }
+    } catch (error) {
+        console.error('❌ Error in QR endpoint:', error);
         res.status(500).json({
             success: false,
             error: error.message,
