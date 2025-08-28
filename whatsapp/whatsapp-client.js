@@ -42,7 +42,7 @@ const setupSocketEvents = (sock, resolve, reject) => {
 
         // कनेक्शन स्थिति अपडेट
         if (connection) {
-            console.log(`WhatsApp connection status: ${connection}`);
+            console.log(`📱 WhatsApp connection status: ${connection}`);
             
             if (connection === 'open') {
                 console.log('✅ Connected to WhatsApp!');
@@ -62,7 +62,7 @@ const setupSocketEvents = (sock, resolve, reject) => {
 
                 // लॉग आउट या अधिकृत उपकरण की अस्वीकृति
                 if (statusCode === DisconnectReason.loggedOut || statusCode === 403) {
-                    console.log('Session expired or logged out. Clearing session data.');
+                    console.log('🔐 Session expired or logged out. Clearing session data.');
                     clearSession();
                     
                     if (!hasResolved) {
@@ -72,7 +72,7 @@ const setupSocketEvents = (sock, resolve, reject) => {
                 } else if (connectionAttempts < MAX_RECONNECT_ATTEMPTS) {
                     // पुनः प्रयास
                     connectionAttempts++;
-                    console.log(`Attempting to reconnect (${connectionAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
+                    console.log(`🔄 Attempting to reconnect (${connectionAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
                     
                     setTimeout(() => {
                         initWhatsApp().then(newSock => {
@@ -97,7 +97,7 @@ const setupSocketEvents = (sock, resolve, reject) => {
 
         // QR कोड प्रदर्शित करें
         if (qr) {
-            console.log('\n\n=== SCAN THIS QR CODE TO LOGIN ===\n');
+            console.log('\n\n=== 📱 SCAN THIS QR CODE TO LOGIN ===\n');
             require('qrcode-terminal').generate(qr, { small: true });
             console.log('\n======================================\n');
         }
@@ -110,7 +110,7 @@ let saveCredentials;
 // WhatsApp क्लाइंट शुरू करें
 const initWhatsApp = async () => {
     try {
-        console.log('Starting WhatsApp client...');
+        console.log('🚀 Starting WhatsApp client...');
         
         // auth स्टेट प्राप्त करें
         const { state, saveCreds } = await useMultiFileAuthState(SESSION_DIR);
@@ -123,16 +123,18 @@ const initWhatsApp = async () => {
             browser: Browsers.macOS('Chrome'),
             logger,
             markOnlineOnConnect: false,
-            connectTimeoutMs: 3600000,  // 1 घंटा
-            defaultQueryTimeoutMs: 3600000,  // 1 घंटा
-            syncFullHistory: false
+            connectTimeoutMs: 60000,  // 1 minute timeout
+            defaultQueryTimeoutMs: 60000,  // 1 minute timeout
+            syncFullHistory: false,
+            retryRequestDelayMs: 2000,
+            maxRetries: 3
         });
         
         // प्रॉमिस प्रदान करें जो सफल कनेक्शन पर रिज़ॉल्व होगा
         return new Promise((resolve, reject) => {
             const timeoutId = setTimeout(() => {
-                reject(new Error('WhatsApp connection timeout after 1 hour'));
-            }, 3600000); // 1 घंटा
+                reject(new Error('WhatsApp connection timeout after 1 minute'));
+            }, 60000); // 1 minute
             
             // इवेंट लिसनर्स सेटअप करें
             setupSocketEvents(sock, (resolvedSock) => {
@@ -144,7 +146,7 @@ const initWhatsApp = async () => {
             });
         });
     } catch (error) {
-        console.error('Failed to initialize WhatsApp:', error);
+        console.error('❌ Failed to initialize WhatsApp:', error);
         throw error;
     }
 };
@@ -155,10 +157,10 @@ const clearSession = () => {
         if (fs.existsSync(SESSION_DIR)) {
             fs.rmSync(SESSION_DIR, { recursive: true, force: true });
             fs.mkdirSync(SESSION_DIR, { recursive: true });
-            console.log('Session data cleared successfully');
+            console.log('🧹 Session data cleared successfully');
         }
     } catch (error) {
-        console.error('Error clearing session data:', error);
+        console.error('❌ Error clearing session data:', error);
     }
 };
 
@@ -168,7 +170,7 @@ const getWhatsAppClient = async (forceReconnect = false) => {
         try {
             waSocket = await initWhatsApp();
         } catch (error) {
-            console.error('Error getting WhatsApp client:', error);
+            console.error('❌ Error getting WhatsApp client:', error);
             throw error;
         }
     }
