@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { checkNumbers } = require('../whatsapp/number-checker');
+const { sendMessages } = require('../whatsapp/message-sender');
 const { getConnectionStatus, clearSession, getQRCode, disconnectWhatsApp } = require('../whatsapp/whatsapp-client');
 const QRCode = require('qrcode');
 
@@ -79,6 +80,64 @@ router.post('/check', async (req, res) => {
         });
     } catch (error) {
         console.error('❌ Error in /check endpoint:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// बल्क मैसेज सेंड एंडपॉइंट
+router.post('/send', async (req, res) => {
+    try {
+        const { numbers, message } = req.body;
+
+        if (!numbers || !Array.isArray(numbers) || numbers.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Please provide an array of phone numbers'
+            });
+        }
+
+        if (!message || typeof message !== 'string' || message.trim().length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Please provide a non-empty message string'
+            });
+        }
+
+        if (numbers.length > 100) {
+            return res.status(400).json({
+                success: false,
+                error: 'Maximum 100 numbers can be messaged at once'
+            });
+        }
+
+        const status = getConnectionStatus();
+        if (!status.connected) {
+            return res.status(503).json({
+                success: false,
+                error: 'WhatsApp is not connected. Please try again later.',
+                status: 'disconnected'
+            });
+        }
+
+        console.log('✉️  Sending messages to', numbers.length, 'numbers');
+        const results = await sendMessages(numbers, message);
+
+        const totalSent = results.filter(r => r.status === 'sent').length;
+        const totalFailed = results.length - totalSent;
+
+        res.json({
+            success: true,
+            results,
+            totalSent,
+            totalFailed,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('❌ Error in /send endpoint:', error);
         res.status(500).json({
             success: false,
             error: error.message,
