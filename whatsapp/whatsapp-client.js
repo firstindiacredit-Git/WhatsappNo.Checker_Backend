@@ -235,10 +235,14 @@ const getWhatsAppClient = async (forceReconnect = false) => {
 
 // कनेक्शन स्थिति प्राप्त करें
 const getConnectionStatus = () => {
+    // Double check connection status
+    const actualConnected = isConnected && waSocket && waSocket.user;
+    
     return {
-        connected: isConnected,
+        connected: actualConnected ? waSocket.user : false,
         socket: waSocket ? true : false,
-        attempts: connectionAttempts
+        attempts: connectionAttempts,
+        user: waSocket?.user ? true : false
     };
 };
 

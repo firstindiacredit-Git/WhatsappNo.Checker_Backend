@@ -114,15 +114,29 @@ router.post('/send', async (req, res) => {
             });
         }
 
-        const status = getConnectionStatus();
+        // Check connection status with retry
+        let status = getConnectionStatus();
+        console.log('🔍 Initial connection status check:', status);
+        
+        // If not connected, wait a bit and retry once
         if (!status.connected) {
+            console.log('⏳ Waiting 2 seconds and retrying connection check...');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            status = getConnectionStatus();
+            console.log('🔍 Retry connection status check:', status);
+        }
+        
+        if (!status.connected) {
+            console.log('❌ WhatsApp not connected after retry. Status:', status);
             return res.status(503).json({
                 success: false,
                 error: 'WhatsApp is not connected. Please try again later.',
-                status: 'disconnected'
+                status: 'disconnected',
+                details: status
             });
         }
-
+        
+        console.log('✅ WhatsApp is connected, proceeding with message send');
         console.log('✉️  Sending messages to', numbers.length, 'numbers');
         const results = await sendMessages(numbers, message);
 
@@ -237,11 +251,24 @@ router.get('/qr', async (req, res) => {
 
 // Health check endpoint
 router.get('/health', (req, res) => {
+    const status = getConnectionStatus();
     res.json({
         success: true,
         status: 'healthy',
+        whatsapp: status,
         timestamp: new Date().toISOString(),
         uptime: process.uptime()
+    });
+});
+
+// Test WhatsApp connection endpoint
+router.get('/test-connection', (req, res) => {
+    const status = getConnectionStatus();
+    console.log('🧪 Test connection status:', status);
+    res.json({
+        success: true,
+        connection: status,
+        timestamp: new Date().toISOString()
     });
 });
 
