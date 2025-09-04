@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 4000;
 
 // मिडलवेयर
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://13.60.87.164:4000', 'https://whatsapp.pizeonfly.com'],
+    origin: ['http://localhost:5173', 'http://13.60.87.164:4000', 'https://whatsapp.pizeonfly.com', 'https://allmytab.com'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
